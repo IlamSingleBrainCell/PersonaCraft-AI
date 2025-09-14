@@ -4,23 +4,26 @@ import type { ChatMessageFile, Source } from '../types';
 
 const SUGGESTED_QUESTIONS_PROMPT = "\n\nAfter your main response, provide up to 3 relevant follow-up questions that the user might have. Format each question on a new line, prefixed with 'SUGGESTION:'.";
 
-// In a browser environment without a build tool, `process` is generally not defined.
-// This check is to prevent a ReferenceError. The API_KEY will be undefined.
-const API_KEY = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
-
 let genAI: GoogleGenAI | null = null;
 let initError: string | null = null;
 
-// Initialize the client once based on the environment variable.
-if (!API_KEY) {
-    initError = "Error: API_KEY environment variable is not set. Please follow the setup instructions to provide an API key.";
-} else {
-    try {
-        genAI = new GoogleGenAI({ apiKey: API_KEY });
-    } catch (e) {
-        console.error("Failed to initialize GoogleGenAI:", e);
-        const message = e instanceof Error ? e.message : "An unknown error occurred during initialization.";
-        initError = `Error initializing Gemini client: ${message.includes('API key not valid') ? 'The provided API key is invalid.' : message}`;
+// Initialize the client once. It is required that process.env.API_KEY is available in the execution environment.
+try {
+    // This will throw a ReferenceError if 'process' is not defined in the environment,
+    // which indicates a build/deployment configuration issue.
+    // The GoogleGenAI constructor will throw an error if the API key is missing or invalid.
+    genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+} catch (e) {
+    console.error("Failed to initialize GoogleGenAI:", e);
+    const message = e instanceof Error ? e.message : "An unknown error occurred during initialization.";
+
+    if (e instanceof ReferenceError && message.includes("process is not defined")) {
+         initError = "Error: The application environment is not configured to access the API key. Please ensure `process.env.API_KEY` is available in your deployment environment.";
+    } else if (message.includes('API key not valid')) {
+        initError = 'Error: The provided API key is invalid. Please check your environment variable.';
+    } else {
+        // This will catch cases where the API key is missing from process.env, etc.
+        initError = "Error: API_KEY environment variable is not set or invalid. Please follow the setup instructions to provide a valid API key.";
     }
 }
 
