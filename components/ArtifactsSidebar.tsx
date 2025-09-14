@@ -1,16 +1,14 @@
+
 import React, { useState } from 'react';
-import type { Artifact, User } from '../types';
+import type { Artifact } from '../types';
 import { DownloadIcon, TrashIcon, SearchIcon, CheckIcon, XIcon } from './IconComponents';
-import Auth from './Auth';
 
 interface ArtifactsSidebarProps {
     artifacts: Artifact[];
     onDeleteArtifact: (id: string) => void;
-    user: User | null;
-    onLogout: () => void;
 }
 
-const ArtifactsSidebar: React.FC<ArtifactsSidebarProps> = ({ artifacts, onDeleteArtifact, user, onLogout }) => {
+const ArtifactsSidebar: React.FC<ArtifactsSidebarProps> = ({ artifacts, onDeleteArtifact }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -87,8 +85,6 @@ const ArtifactsSidebar: React.FC<ArtifactsSidebarProps> = ({ artifacts, onDelete
                     )}
                 </div>
             </div>
-
-            <Auth user={user} onLogout={onLogout} />
         </aside>
     );
 };

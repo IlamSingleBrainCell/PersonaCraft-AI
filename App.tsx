@@ -6,8 +6,7 @@ import ChatInput from './components/ChatInput';
 import ArtifactsSidebar from './components/ArtifactsSidebar';
 import WelcomeScreen from './components/WelcomeScreen';
 import { streamMessageToGemini } from './services/geminiService';
-import * as authService from './services/authService';
-import type { Persona, ChatMessage, ChatMessageFile, Artifact, User } from './types';
+import type { Persona, ChatMessage, ChatMessageFile, Artifact } from './types';
 import { PERSONAS } from './constants';
 import { BotIcon } from './components/IconComponents';
 
@@ -17,30 +16,12 @@ const App: React.FC = () => {
     const [artifacts, setArtifacts] = useState<Artifact[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [user, setUser] = useState<User | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const initializeAuth = async () => {
-            const loggedInUser = await authService.handleOAuthCallback();
-            if (loggedInUser) {
-                setUser(loggedInUser);
-            } else {
-                setUser(authService.getUser());
-            }
-        };
-        initializeAuth();
-    }, []);
-
-    useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
-
-    const handleLogout = () => {
-        authService.logout();
-        setUser(null);
-    };
 
     const handleSuggestedQuestionClick = (question: string) => {
         handleSendMessage(question, [], false);
@@ -136,8 +117,6 @@ const App: React.FC = () => {
             <ArtifactsSidebar 
                 artifacts={artifacts} 
                 onDeleteArtifact={handleDeleteArtifact}
-                user={user}
-                onLogout={handleLogout}
             />
             <div className="flex flex-col flex-1">
                 <Header selectedPersona={selectedPersona} onPersonaChange={setSelectedPersona} />
