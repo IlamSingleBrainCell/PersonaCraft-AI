@@ -25,11 +25,21 @@ export default async function handler(request: Request) {
     const { contents, config: modelConfig } = clientRequestBody;
 
     // Construct the request body for the actual Google API
-    const googleApiRequestBody = {
+    // The systemInstruction must be an object, not a string.
+    const googleApiRequestBody: { [key: string]: any } = {
       contents: contents,
-      systemInstruction: modelConfig.systemInstruction,
-      tools: modelConfig.tools,
     };
+
+    if (modelConfig.systemInstruction) {
+        googleApiRequestBody.systemInstruction = {
+            parts: [{ text: modelConfig.systemInstruction }],
+        };
+    }
+
+    if (modelConfig.tools) {
+        googleApiRequestBody.tools = modelConfig.tools;
+    }
+
 
     const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
 
@@ -54,7 +64,7 @@ export default async function handler(request: Request) {
     // Stream the response body from the Google API directly to the client
     return new Response(googleApiResponse.body, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/event-stream',
       },
     });
 
