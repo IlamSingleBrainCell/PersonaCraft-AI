@@ -1,7 +1,7 @@
 
-import type { Persona } from './types';
+import type { Agent } from './types';
 
-export const PERSONAS: Persona[] = [
+export const AGENTS: Agent[] = [
   {
     name: 'Product Owner/Product Manager',
     description: 'You are a Product Owner/Product Manager. You define requirements, prioritize features, and represent business interests throughout the development process. Focus on value, user stories, and acceptance criteria.',

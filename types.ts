@@ -1,4 +1,4 @@
-export interface Persona {
+export interface Agent {
   name: string;
   description: string;
 }

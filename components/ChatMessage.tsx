@@ -1,15 +1,42 @@
 
 import React, { useRef } from 'react';
-import type { ChatMessage } from '../types';
-import { UserIcon, BotIcon, FileIcon, PdfIcon, SaveIcon } from './IconComponents';
+import type { ChatMessage, Agent } from '../types';
+import { UserIcon, FileIcon, PdfIcon, SaveIcon } from './IconComponents';
 
 interface ChatMessageProps {
     message: ChatMessage;
+    agent: Agent;
     onSuggestedQuestionClick: (question: string) => void;
     onCreateArtifact: (content: string) => void;
 }
 
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onSuggestedQuestionClick, onCreateArtifact }) => {
+const getInitials = (name: string): string => {
+    const parts = name.split(/[\s/]+/);
+    if (parts.length > 1 && parts[0] && parts[1]) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+};
+
+const colors = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 
+    'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 
+    'bg-cyan-500', 'bg-sky-500', 'bg-blue-500', 'bg-indigo-500', 
+    'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500', 
+    'bg-rose-500'
+];
+
+const getAgentColor = (name: string): string => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    hash = hash & hash;
+    return colors[Math.abs(hash) % colors.length] || 'bg-gray-500';
+}
+
+
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, agent, onSuggestedQuestionClick, onCreateArtifact }) => {
     const isUser = message.role === 'user';
     const messageRef = useRef<HTMLDivElement>(null);
 
@@ -45,8 +72,8 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onSuggested
     return (
         <div className={`flex items-start gap-4 p-4 group ${isUser ? 'justify-end' : ''}`}>
             {!isUser && (
-                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                    <BotIcon className="w-5 h-5 text-white" />
+                 <div className={`flex-shrink-0 w-8 h-8 rounded-full ${getAgentColor(agent.name)} flex items-center justify-center`}>
+                    <span className="text-sm font-bold text-white">{getInitials(agent.name)}</span>
                 </div>
             )}
             <div className="relative max-w-3xl w-full">

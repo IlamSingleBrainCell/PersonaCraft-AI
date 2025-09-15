@@ -1,5 +1,5 @@
 {
   "name": "PersonaCraft AI",
-  "description": "A chat application powered by Gemini that allows users to interact with different software development lifecycle personas to discuss project requirements, with support for file uploads and web search.",
+  "description": "A chat application powered by Gemini that allows users to interact with different software development lifecycle agents to discuss project requirements, with support for file uploads and web search.",
   "requestFramePermissions": []
 }

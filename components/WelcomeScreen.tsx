@@ -21,7 +21,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPromptClick }) => {
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome to PersonaCraft AI</h1>
             <p className="text-gray-500 max-w-lg mb-8">
-                Select a persona from the dropdown above and start a conversation. I can help you with requirements, technical designs, test cases, and more.
+                Select an agent from the dropdown above and start a conversation. I can help you with requirements, technical designs, test cases, and more.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">

@@ -6,12 +6,38 @@ import ChatInput from './components/ChatInput';
 import ArtifactsSidebar from './components/ArtifactsSidebar';
 import WelcomeScreen from './components/WelcomeScreen';
 import { streamMessageToGemini } from './services/geminiService';
-import type { Persona, ChatMessage, ChatMessageFile, Artifact } from './types';
-import { PERSONAS } from './constants';
-import { BotIcon } from './components/IconComponents';
+import type { Agent, ChatMessage, ChatMessageFile, Artifact } from './types';
+import { AGENTS } from './constants';
+
+// Helper functions for agent avatar
+const getInitials = (name: string): string => {
+    const parts = name.split(/[\s/]+/);
+    if (parts.length > 1 && parts[0] && parts[1]) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+};
+
+const colors = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 
+    'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 
+    'bg-cyan-500', 'bg-sky-500', 'bg-blue-500', 'bg-indigo-500', 
+    'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500', 
+    'bg-rose-500'
+];
+
+const getAgentColor = (name: string): string => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    hash = hash & hash;
+    return colors[Math.abs(hash) % colors.length] || 'bg-gray-500';
+}
+
 
 const App: React.FC = () => {
-    const [selectedPersona, setSelectedPersona] = useState<Persona>(PERSONAS[0]);
+    const [selectedAgent, setSelectedAgent] = useState<Agent>(AGENTS[0]);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [artifacts, setArtifacts] = useState<Artifact[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +91,7 @@ const App: React.FC = () => {
         setError(null);
 
         try {
-            const stream = streamMessageToGemini(text, selectedPersona.description, useWebSearch, files);
+            const stream = streamMessageToGemini(text, selectedAgent.description, useWebSearch, files);
             let fullText = '';
             
             for await (const chunk of stream) {
@@ -119,7 +145,7 @@ const App: React.FC = () => {
                 onDeleteArtifact={handleDeleteArtifact}
             />
             <div className="flex flex-col flex-1">
-                <Header selectedPersona={selectedPersona} onPersonaChange={setSelectedPersona} />
+                <Header selectedAgent={selectedAgent} onAgentChange={setSelectedAgent} />
                 <main className="flex-1 overflow-y-auto p-4 flex flex-col">
                     {messages.length === 0 ? (
                         <WelcomeScreen onPromptClick={(prompt) => handleSendMessage(prompt, [], false)} />
@@ -129,14 +155,15 @@ const App: React.FC = () => {
                                 <ChatMessageComponent 
                                     key={msg.id} 
                                     message={msg} 
+                                    agent={selectedAgent}
                                     onSuggestedQuestionClick={handleSuggestedQuestionClick}
                                     onCreateArtifact={handleCreateArtifact}
                                 />
                             ))}
                             {isLoading && messages[messages.length - 1]?.role === 'model' && !messages[messages.length - 1]?.text && (
                                  <div className="flex items-start gap-4 p-4">
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                                        <BotIcon className="w-5 h-5 text-white" />
+                                    <div className={`flex-shrink-0 w-8 h-8 rounded-full ${getAgentColor(selectedAgent.name)} flex items-center justify-center`}>
+                                        <span className="text-sm font-bold text-white">{getInitials(selectedAgent.name)}</span>
                                     </div>
                                     <div className="max-w-xl rounded-xl px-5 py-3 shadow-md bg-gray-200 flex items-center space-x-2">
                                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-0"></span>
