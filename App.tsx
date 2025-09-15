@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './components/Header';
 import ChatMessageComponent from './components/ChatMessage';
@@ -49,8 +48,10 @@ const App: React.FC = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
 
+    const connectorsOff = { webSearch: false, jira: false, confluence: false, github: false, bitbucket: false };
+
     const handleSuggestedQuestionClick = (question: string) => {
-        handleSendMessage(question, [], false);
+        handleSendMessage(question, [], connectorsOff);
     };
 
     const handleCreateArtifact = (content: string) => {
@@ -67,7 +68,7 @@ const App: React.FC = () => {
     };
 
 
-    const handleSendMessage = async (text: string, files: ChatMessageFile[], useWebSearch: boolean) => {
+    const handleSendMessage = async (text: string, files: ChatMessageFile[], connectors: { [key: string]: boolean }) => {
         if (!text.trim() && files.length === 0) return;
         
         const userMessage: ChatMessage = {
@@ -91,7 +92,7 @@ const App: React.FC = () => {
         setError(null);
 
         try {
-            const stream = streamMessageToGemini(text, selectedAgent.description, useWebSearch, files);
+            const stream = streamMessageToGemini(text, selectedAgent.description, connectors.webSearch, files);
             let fullText = '';
             
             for await (const chunk of stream) {
@@ -148,7 +149,7 @@ const App: React.FC = () => {
                 <Header selectedAgent={selectedAgent} onAgentChange={setSelectedAgent} />
                 <main className="flex-1 overflow-y-auto p-4 flex flex-col">
                     {messages.length === 0 ? (
-                        <WelcomeScreen onPromptClick={(prompt) => handleSendMessage(prompt, [], false)} />
+                        <WelcomeScreen onPromptClick={(prompt) => handleSendMessage(prompt, [], connectorsOff)} />
                     ) : (
                         <div className="space-y-4">
                             {messages.map(msg => (

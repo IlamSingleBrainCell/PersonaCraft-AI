@@ -1,19 +1,46 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { ChatMessageFile } from '../types';
-import { PaperclipIcon, SendIcon, CloseIcon, GlobeIcon } from './IconComponents';
+import { PaperclipIcon, SendIcon, CloseIcon, TuneIcon, GlobeIcon, JiraIcon, ConfluenceIcon, GitHubIcon, BitbucketIcon } from './IconComponents';
 
 interface ChatInputProps {
-    onSendMessage: (text: string, files: ChatMessageFile[], useWebSearch: boolean) => void;
+    onSendMessage: (text: string, files: ChatMessageFile[], connectors: { [key: string]: boolean }) => void;
     isLoading: boolean;
 }
+
+const ToggleSwitch: React.FC<{ checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ checked, onChange }) => (
+    <label className="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
+        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+    </label>
+);
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
     const [text, setText] = useState('');
     const [files, setFiles] = useState<ChatMessageFile[]>([]);
-    const [useWebSearch, setUseWebSearch] = useState(false);
+    const [isConnectorsMenuOpen, setIsConnectorsMenuOpen] = useState(false);
+    const [connectors, setConnectors] = useState({
+        webSearch: false,
+        jira: false,
+        confluence: false,
+        github: false,
+        bitbucket: false,
+    });
+    
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const MAX_FILES = 10;
+    
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsConnectorsMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [menuRef]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(event.target.files ?? []);
@@ -62,7 +89,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
 
     const handleSend = () => {
         if ((text.trim() || files.length > 0) && !isLoading) {
-            onSendMessage(text, files, useWebSearch);
+            onSendMessage(text, files, connectors);
             setText('');
             setFiles([]);
         }
@@ -77,6 +104,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
 
     const handleAttachClick = () => {
         fileInputRef.current?.click();
+    };
+    
+    const handleConnectorToggle = (connectorName: keyof typeof connectors) => {
+        setConnectors(prev => ({ ...prev, [connectorName]: !prev[connectorName] }));
     };
 
     const acceptedFileTypes = "image/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
@@ -113,13 +144,57 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
                     multiple
                 />
                 
-                <button
-                    onClick={() => setUseWebSearch(!useWebSearch)}
-                    className={`p-2 rounded-full transition-colors ${useWebSearch ? 'bg-blue-500 text-white' : 'text-gray-500 hover:text-blue-500'}`}
-                    title={useWebSearch ? 'Web Search Enabled' : 'Enable Web Search'}
-                >
-                    <GlobeIcon className="w-5 h-5" />
-                </button>
+                <div className="relative" ref={menuRef}>
+                    <button
+                        onClick={() => setIsConnectorsMenuOpen(!isConnectorsMenuOpen)}
+                        className={`p-2 rounded-full transition-colors ${Object.values(connectors).some(v => v) ? 'bg-blue-500 text-white' : 'text-gray-500 hover:text-blue-500'}`}
+                        title="Tools and Connectors"
+                    >
+                        <TuneIcon className="w-5 h-5" />
+                    </button>
+                    {isConnectorsMenuOpen && (
+                         <div className="absolute bottom-full left-0 mb-2 w-72 bg-gray-800 text-white rounded-lg shadow-lg z-10 p-2 space-y-1">
+                            <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <GlobeIcon className="w-5 h-5 text-gray-300"/>
+                                    <span className="text-sm font-medium">Web search</span>
+                                </div>
+                                <ToggleSwitch checked={connectors.webSearch} onChange={() => handleConnectorToggle('webSearch')} />
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <JiraIcon />
+                                    <span className="text-sm font-medium">Jira</span>
+                                </div>
+                                <ToggleSwitch checked={connectors.jira} onChange={() => handleConnectorToggle('jira')} />
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <ConfluenceIcon />
+                                    <span className="text-sm font-medium">Confluence</span>
+                                </div>
+                                <ToggleSwitch checked={connectors.confluence} onChange={() => handleConnectorToggle('confluence')} />
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <GitHubIcon className="w-5 h-5 text-gray-300"/>
+                                    <span className="text-sm font-medium">GitHub</span>
+                                </div>
+                                <ToggleSwitch checked={connectors.github} onChange={() => handleConnectorToggle('github')} />
+                            </div>
+                             <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <BitbucketIcon />
+                                    <span className="text-sm font-medium">Bitbucket</span>
+                                </div>
+                                <ToggleSwitch checked={connectors.bitbucket} onChange={() => handleConnectorToggle('bitbucket')} />
+                            </div>
+                            <div className="border-t border-gray-600 my-1 mx-[-8px]"></div>
+                            <button className="w-full text-left p-2 rounded-md text-sm font-medium hover:bg-gray-700 text-gray-300 opacity-50 cursor-not-allowed">+ Add connectors</button>
+                            <button className="w-full text-left p-2 rounded-md text-sm font-medium hover:bg-gray-700 text-gray-300 opacity-50 cursor-not-allowed">Manage connectors</button>
+                         </div>
+                    )}
+                </div>
 
                 <textarea
                     value={text}
